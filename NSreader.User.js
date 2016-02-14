@@ -3,8 +3,10 @@
 // @namespace    http://tampermonkey.net/hakt0-r/
 // @version      0.1
 // @description  Adds infinite scrolling to Newscientist past issues page
-// @author       hakt0r
+// @author       hakt0r, CapType
 // @match        https://www.newscientist.com/issues/
+// @updateURL    https://github.com/hakt0-r/tmNS_enhancer/raw/master/NSreader.User.js
+// @downloadURL  https://github.com/hakt0-r/tmNS_enhancer/raw/master/NSreader.User.js
 // @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
