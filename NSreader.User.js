@@ -3,8 +3,10 @@
 // @namespace    http://tampermonkey.net/hakt0-r/
 // @version      0.1
 // @description  Adds infinite scrolling to Newscientist past issues page
-// @author       hakt0r
+// @author       hakt0r, CapType
 // @match        https://www.newscientist.com/issues/
+// @updateURL    https://github.com/hakt0-r/tmNS_enhancer/raw/master/NSreader.User.js
+// @downloadURL  https://github.com/hakt0-r/tmNS_enhancer/raw/master/NSreader.User.js
 // @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
@@ -54,6 +56,7 @@ function getNextPage(cbComplete) {
             iframeContentDocument = iframeContentDocument.document;
         }
         iframeContentDocument.getElementsByTagName('body')[0].innerHTML = response.responseText;
+
         processNextPage(iframeContentDocument);
         cbComplete();
 	    }
@@ -70,6 +73,19 @@ function createIframe() {
 
     return iframe;
 }
+
+function replaceImageAsCanvas(images) {
+    for (var i = 0;i < images.length; i++) {
+        var canvas = document.createElement('canvas'),
+            context = canvas.getContext('2d');
+        canvas.width = 146;
+        canvas.height = 191;
+
+        context.drawImage(images[i], 0, 0, 146, 191);
+        images[i].parentNode.replaceChild(canvas, images[i]);
+    }
+}
+
 
 /**
  * Get the entries from the next page, and insert them in to the
@@ -89,6 +105,21 @@ function processNextPage(iframeContentDocument) {
     for (var i = 0, l = entries.length; i < l; i++) {
         entry = document.importNode(entries[i], true);
         ol_doc.appendChild(entry);
+    }
+
+    // replace all image as 146x191 canvas
+    var images = ol_doc.getElementsByTagName('img');
+    var loaded = 0;
+    var inc = function() {
+        loaded += 1;
+        if ( loaded === images.length) {
+            replaceImageAsCanvas(images);
+        }
+    };
+    for (var i = 0;i < images.length; i++) {
+         var img = new Image();
+         img.onload = inc;
+         img.src = images[i].src;
     }
 }
 
