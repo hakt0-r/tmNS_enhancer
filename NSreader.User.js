@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Newscientist past issues infinite scroll
+// @name         Newscientist past issues infinite scroll + HTML5 e-magazine reader.
 // @namespace    http://tampermonkey.net/hakt0-r/
 // @version      0.1
 // @description  Adds infinite scrolling to Newscientist past issues page
