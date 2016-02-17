@@ -1,12 +1,13 @@
 // ==UserScript==
-// @name         Newscientist past issues infinite scroll + HTML5 e-magazine reader.
+// @name         Newscientist past issues infinite scroll
 // @namespace    http://tampermonkey.net/hakt0-r/
 // @version      0.3
 // @description  Adds infinite scrolling to Newscientist past issues page
 // @author       hakt0r, CapType
 // @match        https://www.newscientist.com/issues/
-// @updateURL    https://raw.github.com/hakt0-r/tmNS_enhancer/master/NSreader.User.js
-// @downloadURL  https://raw.github.com/hakt0-r/tmNS_enhancer/master/NSreader.User.js
+// @include      https://www.newscientist.com/issue/*
+// @updateURL    https://github.com/hakt0-r/tmNS_enhancer/raw/master/NSreader.User.js
+// @downloadURL  https://github.com/hakt0-r/tmNS_enhancer/raw/master/NSreader.User.js
 // @grant        unsafeWindow
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
@@ -186,8 +187,18 @@ var issues_scrolling = (function () {
 
 var issue_viewing = (function () {
 
-    var iframe,
-        tom,
+    var iframe_article,
+        iframe_toc,
+        
+    deleteElements = function(doc, elementsToDelete) {
+        for (var i = 0; i < elementsToDelete.length; i++) {
+            var elem = doc[elementsToDelete[i].func](elementsToDelete[i].value);
+            if (elementsToDelete[i].index !== false) {
+                elem = elem[elementsToDelete[i].index];
+            }
+            elem.parentNode.removeChild(elem);
+        }
+    },
     
     processLink = function(iframeContentDocument) {
         var elementsToDelete = [
@@ -197,13 +208,11 @@ var issue_viewing = (function () {
             {func: 'getElementsByClassName', value: 'leaderboard-container', index: 0},
             {func: 'getElementById', value: 'breadcrumbs', index: false},
         ];
-        for (var i = 0; i < elementsToDelete.length; i++) {
-            var elem = iframeContentDocument[elementsToDelete[i].func](elementsToDelete[i].value);
-            if (elementsToDelete[i].index !== false) {
-                elem = elem[elementsToDelete[i].index];
-            }
-            elem.parentNode.removeChild(elem);
-        }
+        deleteElements(iframeContentDocument, elementsToDelete);
+        
+        // update page size
+        var size = Math.max(iframe_toc.contentDocument.body.scrollHeight, iframe_article.contentDocument.body.scrollHeight);
+        document.body.style.height = (size + 200) + "px";
     },
     
     doneLink = function() {
@@ -211,26 +220,52 @@ var issue_viewing = (function () {
     },
         
     openLink = function() {
-        getNextPage(iframe, this.href, processLink, doneLink);
+        getNextPage(iframe_article, this.href, processLink, doneLink);
         return false;
     },
     
     init = function() {
-        tom = document.getElementsByClassName('magazine-article-index')[0];
-        var entry = document.importNode(tom, true);
-        entry.style.width = "30%";
-        entry.style.float = "left";
-        var main = document.getElementById('main-container');
-        while(main.firstChild) {
-           main.removeChild(main.firstChild);
-        }
-        main.appendChild(entry);
-        iframe = createIframe("69%", entry.offsetHeight + 'px');
-        iframe.style.float = "right";
-        main.appendChild(iframe);
-        var links = entry.getElementsByTagName('a');
-        getNextPage(iframe, links[0].href, processLink, doneLink);
+        // Clean page
+        var entry = document.importNode(document.getElementsByClassName('magazine-article-index')[0], true);
+        var elementsToDelete = [
+            {func: 'getElementsByTagName', value: 'header', index: 0},
+            {func: 'getElementsByTagName', value: 'footer', index: 0},
+            {func: 'getElementsByClassName', value: 'leaderboard-container', index: 0},
+            {func: 'getElementById', value: 'main-container', index: false},
+        ];
+        deleteElements(document, elementsToDelete);
+        
+        // Toc Iframe
+        iframe_toc = createIframe("30%", "100%");
+        iframe_toc.style.float = "left";
+        document.body.appendChild(iframe_toc);
+        var d = iframe_toc.contentDocument;
+        d.open();
+        d.write(
+            '<!DOCTYPE html>'+
+            '<html lang="en-US" xmlns:fb="http://ogp.me/ns/fb#" xmlns:addthis="http://www.addthis.com/help/api-spec"  class="no-js">'+
+            '<head>'+
+            "<link href='//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic|PT+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>"+
+            '<link rel="canonical" href="https://www.newscientist.com/issue/" />'+
+            "<link rel='stylesheet' id='all-css-0' href='https://www.newscientist.com/_static/??-eJx1j81uAjEMhF+IxFpgQRwQj7JKE5M1yh+xU9i3b6hoL8BxPN/YHrgVZXMSTAIlNE+JIeFdPCblTQhYFyg1u2aFocxZsq1GaHoyELsV8D8zPTOTIy7BLMDSaftiVwxG0E0UjUfWlnkFbz4xzslMDN2H3KQ0+YhW5JIT0zeqQH6Wr3wHw4z97bNJdnnoy7X14/pPq0Fv9PZlo8wYfxvdFFvqE2LpPZaAOlJ64Kd4HLbjuFvvD8N4+QFFE3to' type='text/css' media='all' />"+
+            '</head><body></body></html>'
+        );
+        d.close();
+
+        d.body.innerHTML = entry.innerHTML;
+        
+        // Article Iframe
+        iframe_article = createIframe("69%", '100%');
+        iframe_article.style.float = "right";
+        iframe_article.style.border = "3px black solid";
+        document.body.appendChild(iframe_article);
+        
+        // Change links
+        var links = iframe_toc.contentDocument.getElementsByTagName('a');
+        getNextPage(iframe_article, links[0].href, processLink, doneLink);
         for (var i=0; i < links.length; i++) {
+            links[i].style['word-wrap'] = 'normal';
+            links[i].style['white-space'] = 'normal';
             links[i].onclick = openLink;
         }
     };
