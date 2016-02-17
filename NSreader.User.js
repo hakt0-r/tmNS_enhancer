@@ -24,7 +24,7 @@ function createIframe(if_width, if_height) {
     return ifrm;
 }
 
-function getNextPage(iframe, url, cbProcess, cbComplete) {
+function getNextPage(iframe, url, cbProcess) {
     GM_xmlhttpRequest({
         method: 'GET', // 142.84
         url: url,
@@ -35,7 +35,6 @@ function getNextPage(iframe, url, cbProcess, cbComplete) {
             }
             iframeContentDocument.getElementsByTagName('body')[0].innerHTML = response.responseText;
             cbProcess(iframeContentDocument);
-            cbComplete();
         }
     });
 }
@@ -64,7 +63,7 @@ var issues_scrolling = (function () {
             clearInterval(intervalTimer);
             isUpdating = true;
             showLoading();
-            getNextPage(iframe, nextPageLink, processNextPage, doneLoading);
+            getNextPage(iframe, nextPageLink, processNextPage);
         }
     },
     
@@ -123,6 +122,9 @@ var issues_scrolling = (function () {
 
         // replace all image as 146x191 canvas
         replace_all_images(ol_doc);
+		
+		// end loading
+		doneLoading();
     },
         
     getNextPageLink = function() {
@@ -209,18 +211,10 @@ var issue_viewing = (function () {
             {func: 'getElementById', value: 'breadcrumbs', index: false},
         ];
         deleteElements(iframeContentDocument, elementsToDelete);
-        
-        // update page size
-        var size = Math.max(iframe_toc.contentDocument.body.scrollHeight, iframe_article.contentDocument.body.scrollHeight);
-        document.body.style.height = (size + 200) + "px";
-    },
-    
-    doneLink = function() {
-        // NOOP
     },
         
     openLink = function() {
-        getNextPage(iframe_article, this.href, processLink, doneLink);
+        getNextPage(iframe_article, this.href, processLink);
         return false;
     },
     
@@ -236,7 +230,7 @@ var issue_viewing = (function () {
         deleteElements(document, elementsToDelete);
         
         // Toc Iframe
-        iframe_toc = createIframe("30%", "100%");
+        iframe_toc = createIframe("30%", "90%");
         iframe_toc.style.float = "left";
         iframe_toc.style.border = "10px solid white";
         document.body.appendChild(iframe_toc);
@@ -256,14 +250,14 @@ var issue_viewing = (function () {
         d.body.innerHTML = entry.innerHTML;
         
         // Article Iframe
-        iframe_article = createIframe("68%", '100%');
+        iframe_article = createIframe("68%", '95%');
         iframe_article.style.float = "right";
         iframe_article.style.borderLeft = "3px black solid";
         document.body.appendChild(iframe_article);
         
         // Change links
         var links = iframe_toc.contentDocument.getElementsByTagName('a');
-        getNextPage(iframe_article, links[0].href, processLink, doneLink);
+        getNextPage(iframe_article, links[0].href, processLink);
         for (var i=0; i < links.length; i++) {
             links[i].style['word-wrap'] = 'normal';
             links[i].style['white-space'] = 'normal';
