@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Newscientist past issues infinite scroll
 // @namespace    http://tampermonkey.net/hakt0-r/
-// @version      0.3
-// @description  Adds infinite scrolling to Newscientist past issues page
-// @author       hakt0r, CapType
+// @version      0.4
+// @description  Adds infinite scrolling to Newscientist past issues page and Use two iframes for magazine style reading.
+// @author       hakt0r & CapType
 // @match        https://www.newscientist.com/issues/
 // @include      https://www.newscientist.com/issue/*
 // @updateURL    https://github.com/hakt0-r/tmNS_enhancer/raw/master/NSreader.User.js
@@ -238,6 +238,7 @@ var issue_viewing = (function () {
         // Toc Iframe
         iframe_toc = createIframe("30%", "100%");
         iframe_toc.style.float = "left";
+        iframe_toc.style.border = "10px solid white";
         document.body.appendChild(iframe_toc);
         var d = iframe_toc.contentDocument;
         d.open();
@@ -255,9 +256,9 @@ var issue_viewing = (function () {
         d.body.innerHTML = entry.innerHTML;
         
         // Article Iframe
-        iframe_article = createIframe("69%", '100%');
+        iframe_article = createIframe("68%", '100%');
         iframe_article.style.float = "right";
-        iframe_article.style.border = "3px black solid";
+        iframe_article.style.borderLeft = "3px black solid";
         document.body.appendChild(iframe_article);
         
         // Change links
