@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Newscientist past issues infinite scroll
 // @namespace    http://tampermonkey.net/hakt0-r/
-// @version      0.1
+// @version      0.3
 // @description  Adds infinite scrolling to Newscientist past issues page
 // @author       hakt0r, CapType
 // @match        https://www.newscientist.com/issues/
