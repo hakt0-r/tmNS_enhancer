@@ -1,5 +1,6 @@
 // ==UserScript==
-// @name         Newscientist past issues infinite scroll
+// @id           Newscientist_UI_Enhancer@https://github.com/hakt0-r/tmNS_enhancer
+// @name         Newscientist UI Enhancer
 // @namespace    http://tampermonkey.net/hakt0-r/
 // @version      0.4
 // @description  Adds infinite scrolling to Newscientist past issues page and Use two iframes for magazine style reading.
