@@ -2,7 +2,7 @@
 // @id           Newscientist_UI_Enhancer@https://github.com/hakt0-r/tmNS_enhancer
 // @name         Newscientist UI Enhancer
 // @namespace    http://tampermonkey.net/hakt0-r/
-// @version      0.4
+// @version      0.4.1
 // @description  Adds infinite scrolling to Newscientist past issues page and Use two iframes for magazine style reading.
 // @author       hakt0r & CapType
 // @match        https://www.newscientist.com/issues/
@@ -14,8 +14,9 @@
 // ==/UserScript==
 'use strict';
 
-function createIframe(if_width, if_height) {
+function createIframe(if_id, if_width, if_height) {
     var ifrm = document.createElement('iframe');
+    ifrm.id = if_id;
     ifrm.src = 'about:blank';
     ifrm.style.width = if_width;
     ifrm.style.height = if_height;
@@ -204,14 +205,36 @@ var issue_viewing = (function () {
     },
     
     processLink = function(iframeContentDocument) {
-        var elementsToDelete = [
-            {func: 'getElementsByTagName', value: 'header', index: 0},
-            {func: 'getElementsByTagName', value: 'footer', index: 1},
-            {func: 'getElementsByTagName', value: 'nav', index: 0},
-            {func: 'getElementsByClassName', value: 'leaderboard-container', index: 0},
-            {func: 'getElementById', value: 'breadcrumbs', index: false},
-        ];
-        deleteElements(iframeContentDocument, elementsToDelete);
+        var mc = iframeContentDocument.getElementById('main-container');
+ 
+        iframeContentDocument.head.innerHTML = '' +
+        	"<link href='//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic|PT+Serif:400,700,400italic,700italic' rel='stylesheet' type='text/css'>"+
+            '<link rel="canonical" href="https://www.newscientist.com/issue/" />'+
+            "<link rel='stylesheet' id='all-css-0' href='https://www.newscientist.com/_static/??-eJx1j81uAjEMhF+IxFpgQRwQj7JKE5M1yh+xU9i3b6hoL8BxPN/YHrgVZXMSTAIlNE+JIeFdPCblTQhYFyg1u2aFocxZsq1GaHoyELsV8D8zPTOTIy7BLMDSaftiVwxG0E0UjUfWlnkFbz4xzslMDN2H3KQ0+YhW5JIT0zeqQH6Wr3wHw4z97bNJdnnoy7X14/pPq0Fv9PZlo8wYfxvdFFvqE2LpPZaAOlJ64Kd4HLbjuFvvD8N4+QFFE3to' type='text/css' media='all' />"+
+            '' ;
+        iframeContentDocument.body.innerHTML = '';
+        iframeContentDocument.body.innerHTML = mc.outerHTML;
+		if ( iframeContentDocument.getElementById('breadcrumbs') !== null ) { 
+			iframeContentDocument.getElementById('breadcrumbs').remove(true); 
+		}
+		if ( iframeContentDocument.getElementById('article-outbrain') !== null ) {
+			iframeContentDocument.getElementById('article-outbrain').remove(true);
+		}		
+		if ( iframeContentDocument.getElementById('tertiary-sidebar') !== null ) {
+			iframeContentDocument.getElementById('tertiary-sidebar').remove(true);
+		}
+		if ( iframeContentDocument.getElementsByClassName('mpu') !== null ) {
+			var elementsToDelete = iframeContentDocument.getElementsByClassName('mpu');
+			for (var i = 0; i < elementsToDelete.length; i++) {
+				var elem = elementsToDelete[i];
+				elem.parentNode.removeChild(elem);
+			}
+		}
+		if ( iframeContentDocument.getElementsByClassName('cover-article') !== null ) {
+			elem = iframeContentDocument.getElementsByClassName('cover-article');
+			elem[0].parentNode.removeChild(elem[0]);
+		}
+//		jQuery(iframeContentDocument.getElementsByClassName('previous-article')).find('a').onclick = openLink;
     },
         
     openLink = function() {
@@ -230,8 +253,8 @@ var issue_viewing = (function () {
         ];
         deleteElements(document, elementsToDelete);
         
-        // Toc Iframe
-        iframe_toc = createIframe("30%", "90%");
+        // TOC iframe
+        iframe_toc = createIframe("toc-frame", "30%", "93%");
         iframe_toc.style.float = "left";
         iframe_toc.style.border = "10px solid white";
         document.body.appendChild(iframe_toc);
@@ -249,21 +272,23 @@ var issue_viewing = (function () {
         d.close();
 
         d.body.innerHTML = entry.innerHTML;
-        
-        // Article Iframe
-        iframe_article = createIframe("68%", '95%');
-        iframe_article.style.float = "right";
-        iframe_article.style.borderLeft = "3px black solid";
-        document.body.appendChild(iframe_article);
-        
-        // Change links
+
+        // TOC Links management
         var links = iframe_toc.contentDocument.getElementsByTagName('a');
-        getNextPage(iframe_article, links[0].href, processLink);
         for (var i=0; i < links.length; i++) {
             links[i].style['word-wrap'] = 'normal';
             links[i].style['white-space'] = 'normal';
             links[i].onclick = openLink;
-        }
+        }        
+         
+        // Article iframe
+        iframe_article = createIframe("content-frame", "68%", '95%');
+        iframe_article.style.float = "right";
+        iframe_article.style.borderLeft = "3px black solid";
+        document.body.appendChild(iframe_article);
+        
+        // TOC Load 1st Link      
+        getNextPage(iframe_article, links[0].href, processLink);
     };
     
     return {
